@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using System.Windows.Forms.VisualStyles;
 using Tesseract;
 
 namespace GenshinOverlay {
@@ -28,6 +29,7 @@ namespace GenshinOverlay {
 
         public static void Capture(IntPtr handle, Point pos, Size size, ref OCRCapture ocrCapture, bool debug = false) {
             if(handle == IntPtr.Zero) { return; }
+            long milliseconds = DateTime.Now.Ticks;
             Bitmap b = CaptureWindowArea(handle, pos, size);
             if(b == null) { return; }
             if(debug) { Directory.CreateDirectory(Application.StartupPath + @"\debug"); }
@@ -56,14 +58,14 @@ namespace GenshinOverlay {
                                         pix.XRes = 300;
                                         pix.YRes = 300;
 
-                                        using(Page page = Engine.Process(pix, PageSegMode.SingleLine)) {
+                                        using(VisualStyleElement.Page page = Engine.Process(pix, PageSegMode.SingleLine)) {
                                             ocrCapture.Text = page.GetText().Trim();
                                             ocrCapture.Confidence = page.GetMeanConfidence();
                                             ocrCapture.Iterations++;
                                             if(ocrCapture.Confidence >= Config.OCRMinimumConfidence) {
                                                 if(decimal.TryParse(ocrCapture.Text, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out decimal cooldown)) {
                                                     if(cooldown < Config.CooldownMaxPossible) {
-                                                        ocrCapture.Cooldown = cooldown;
+                                                        ocrCapture.Cooldown = cooldown - (DateTime.Now.Ticks-milliseconds)/1000M;
                                                     }
                                                 }
                                             }
